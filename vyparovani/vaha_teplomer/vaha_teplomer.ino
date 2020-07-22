@@ -34,9 +34,8 @@ void setup() {
 
 void loop() {
   sensors.requestTemperatures();
-  //Serial.println(sensors.getTempCByIndex(0));
-  //Serial.print(",");
-  Serial.print(scale.get_units(), 1); //scale.get_units() returns a float
+  Serial.println(sensors.getTempCByIndex(0));
+  Serial.print(scale.get_units(), 1);
   Serial.println();
   delay(5000);
 }

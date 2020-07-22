@@ -11,14 +11,14 @@ bool bang = false;
 void setup()
 {
   Serial.begin(9600);
-  pinMode(startGate, INPUT_PULLUP);
-  pinMode(endGate, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(startGate), UpdateTimeStart, RISING);
-  attachInterrupt(digitalPinToInterrupt(endGate), UpdateTimeEnd, RISING);
-  if (digitalRead(startGate) == LOW){
+  pinMode(startGate, INPUT);
+  pinMode(endGate, INPUT);
+  attachInterrupt(digitalPinToInterrupt(startGate), UpdateTimeStart, FALLING);
+  attachInterrupt(digitalPinToInterrupt(endGate), UpdateTimeEnd, FALLING);
+  if (digitalRead(startGate) == HIGH){
       Serial.println("startGate ready");}
       else{Serial.println("startGate problem");}
-  if (digitalRead(endGate) == LOW){
+  if (digitalRead(endGate) == HIGH){
       Serial.println("endGate ready");}
       else{Serial.println("endGate problem");}  
 }
