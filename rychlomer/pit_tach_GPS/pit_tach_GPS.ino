@@ -1,4 +1,13 @@
+/*Program pro měření rychlosti Pitotovou trubicí,Hallovým senzorem a GPS.
+ *Součástí je i záznam na SD kartu a zobrazení na display.
+ *Kód byl použit v bakalářské práci Vybrané školní experimenty z mechaniky s využitím Arduina. 
+ *
+ *Vypracoval: Jaroslav Karlík
+ *Licence: veřejná
+ *
+ */
 
+//použité knihovny
 #include <SPI.h>
 #include <SD.h>
 #include <NMEAGPS.h>
@@ -11,28 +20,27 @@
 SSD1306AsciiAvrI2c oled;
 
 //SD karta
-const int chipSelect = 4;
+const int chipSelect = 4; //připojení modulu SD karty: CS-4, SCK-13, MOSI-11, MISO-12
 
 //pitotova trubice:
-float V_0 = 5.0; // supply voltage to the pressure sensor
-float rho = 1.204; // density of air 
-// parameters for averaging and offset
+float V_0 = 5.0;
+float rho = 1.204; //hustora vzduchu
 int offset = 0;
 int offset_size = 10;
 int veloc_mean_size = 20;
 int zero_span = 2;
 
-//tachometr:
-const int interruptPin = 3; // cislo pinu kam pripojime halluv sensor nebo tlacitko
-const int debounce = 50; // minimalni cas, ktery pulse muze mit. Odfiltruje to sum na tlacitku viz https://en.wikipedia.org/wiki/Switch#Contact_bounce
-volatile long lastMillis = 0; // vsechny promene, ktere se maji menit ve funkci volane prerusenim, musi mit pred sebou 'volatile'
+//otáčkoměr:
+const int interruptPin = 3; //Digitální výstup Hallova senzoru připojit na pin 3
+const int debounce = 50; //Minimalni cas, ktery musí mít pulz, aby nebyl označen za šum
+volatile long lastMillis = 0; //Všechny proměnné, které se mají měnit ve funkci volané přerušením, musí mít před sebou 'volatile'
 volatile long newMillis = 0;
-volatile long pulseTime = 0; // sem ulozime rozdil casu mezi pulsy
-volatile long millisDiff = 0; // sem budeme ukladat rozdil casu mezi pulsy nez rozhodneme, jestli to neni sum
+volatile long pulseTime = 0; //Uloží rozdíl času mezi pulzy
+volatile long millisDiff = 0; //Uloží rozdíl času mezi pulzy do rozhodnutí, jestli jde o šum nebo ne
 float TachoSpeed = 0;
 
 //GPS
-//BACHA na prehozeni barev !!! Cervena je zem a cerna je 5V
+//připojení GPS k pinům:
 //rxd na gps - 9
 //txd na gps - 8 (piny jsou definovány v knihovně)
 
@@ -43,17 +51,17 @@ float GPSpeed = 0;
 void setup() {
  Serial.begin(9600);
  
-//SDkarta
+//SDkarta                                             //Program funguje pouze pokud je vložena SD karta
   while (!Serial) {
   }
 
-  Serial.print("Initializing SD card...");
+  Serial.print("Načítání SD karty...");
 
   if (!SD.begin(chipSelect)) {
-    Serial.println("Card failed, or not present");
+    Serial.println("Karta selhala, nebo není přítomna");
     while (1);
   }
-  Serial.println("card initialized.");
+  Serial.println("Karta načtena.");
 
 
 //pitotova trubice
@@ -64,8 +72,8 @@ void setup() {
   Serial.print("AhojPit");
   
 //tachometr:
-  pinMode(interruptPin, INPUT_PULLUP); // dokud neni tlacitko zmacknute bude pin ve stavu HIGH viz https://arduino.cz/arduino-zaklady-funkce-input_pullup/
-  attachInterrupt(digitalPinToInterrupt(interruptPin), UpdatePulseTime, FALLING); // nastavime preruseni na pin 3, bude reagovat na klesajici napeti a bude volat funkci UpdatePulseTime
+  pinMode(interruptPin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(interruptPin), UpdatePulseTime, FALLING); //Nastavené přerušení na pin 3, bude reagovat na klesající napětí a volat funkci UpdatePulseTime
   Serial.print("AhojTacho");
 
 //GPS
@@ -124,7 +132,7 @@ void loop() {
 //SD karta
   File dataFile = SD.open("kal.csv", FILE_WRITE);
 
-  if (dataFile) {
+  if (dataFile) {                                         //zapíše všechna data na SD kartu
     dataFile.print(fix.dateTime.hours);
     dataFile.print(":");
     dataFile.print(fix.dateTime.minutes);
@@ -143,33 +151,8 @@ void loop() {
     dataFile.close();
     Serial.println("úspěšně zapsáno");
   }
-  // if the file isn't open, pop up an error:
-  else {
-    Serial.println("error opening datalog.txt");
-  }
-/*
-  Serial.println("čtení ze souboru");
-  dataFile = SD.open("test.txt");
-  if (dataFile)
-  {
-    Serial.println("soubor obsahuje: ");
 
-    // čti ze souboru, dokud je co
-    while (dataFile.available())
-    {
-      Serial.write(dataFile.read());
-    }
-    // zavři soubor
-    dataFile.close();
-  }
-  // pokud se nepodaří soubor načíst a otevřít, tak:
-  else
-  {
-    Serial.println("soubor se nepodarilo otevrit");
-  }
-*/
-
-//display print
+//display print           //vypíše hodnoty na display
   oled.clear();
   oled.print("P: ");
   oled.println(veloc);
@@ -178,17 +161,17 @@ void loop() {
   oled.println(TachoSpeed);
   //oled.println(" mps");
   oled.print("G: ");
-  oled.println(GPSpeed); //definováno pomocí float nahoře
+  oled.println(GPSpeed);
   //oled.println(" mps");
 
-  delay(100);
+  delay(100);           //počká desetinu sekundy
 }
 
 void UpdatePulseTime() {
-  newMillis = millis(); // koukni na hodiny
-  millisDiff = newMillis - lastMillis; // spocitej rozdil od posledniho ulozeneho casu
-  if (millisDiff > debounce){ // pokud je vetsi nez 50ms, udelej nasledujici dva radky, pokud je mensi je to sum a nedelej nic
-    pulseTime = millisDiff; // aktualizuj delku pulsu
-    lastMillis = newMillis; // a aktualizuj posledni ulozeny cas
+  newMillis = millis(); //Aktualizuje čas
+  millisDiff = newMillis - lastMillis; //Spočítá rozdíl od posledního uloženého času
+  if (millisDiff > debounce){ //Pokud je rozdíl větší než 50ms, provedou se následující dva řádky, pokud je menší je to šum.
+    pulseTime = millisDiff; //Aktualizuje délku pulzu
+    lastMillis = newMillis; // a aktualizuje poslední uložený čas
     }
 }
