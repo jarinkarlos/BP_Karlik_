@@ -1,3 +1,7 @@
+
+
+
+
 #define startGate 2
 #define endGate 3
  
@@ -27,16 +31,12 @@ void loop() {
   if (startTime > 0 && endTime > 0 && bang == false){
     noInterrupts();
     bulletTime = endTime - startTime;
-    //bulletSpeed = ((float)6,36)/(float)bulletTime;
     Serial.print("Start: ");
     Serial.print(startTime);
     Serial.print(" End: ");
     Serial.print(endTime);
     Serial.print(" Time: ");
     Serial.println(bulletTime);
-    //Serial.print(" Speed: ");
-    //Serial.print(bulletSpeed);
-    //Serial.println(" mm/ms");
     interrupts();
     bang = true;
   }
