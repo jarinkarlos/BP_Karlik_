@@ -31,6 +31,11 @@
 
 */
 
+/*
+ * Upravil: Jaroslav Karlík
+ * Thank you Nathan Seidle, I invate you for a beer someday.
+ */
+
 #include "HX711.h"
 
 #define DOUT  3
